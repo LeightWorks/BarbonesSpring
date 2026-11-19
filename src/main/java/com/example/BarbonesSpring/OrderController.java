@@ -26,14 +26,12 @@ class OrderController {
     }
 
     @GetMapping("/orders")
-    CollectionModel<EntityModel<Order>> all(){
+    CollectionModel<EntityModel<Order>> all(@RequestParam(required = false) Priority priority){
 
-        List<EntityModel<Order>> orders = orderRepository.findAll().stream()
-                .map(assembler::toModel)
-                .collect(Collectors.toList());
-
-        return CollectionModel.of(orders,
-                linkTo(methodOn(OrderController.class).all()).withSelfRel());
+        List<Order> orders = (priority == null)
+                ? orderRepository.findAll()
+                : orderRepository.findByPriority(priority);
+        return assembler.toCollectionModel(orders);
     }
 
     @GetMapping("/orders/{id}")
@@ -49,6 +47,9 @@ class OrderController {
 
         order.setStatus(Status.IN_PROGRESS);
         Order newOrder = orderRepository.save(order);
+        if (order.getPriority() == null){
+            order.setPriority(Priority.NORMAL);
+        }
 
         return ResponseEntity //
                 .created(linkTo(methodOn(OrderController.class).one(newOrder.getId())).toUri()) //
@@ -91,5 +92,25 @@ class OrderController {
                 .body(Problem.create() //
                         .withTitle("Method not allowed") //
                         .withDetail("You can't complete an order that is in the " + order.getStatus() + " status"));
+    }
+    @PutMapping("/orders/{id}/priority")
+    ResponseEntity<?> priorityChange(@PathVariable Long id, Priority priority) {
+
+        Order order = orderRepository.findById(id) //
+                .orElseThrow(() -> new OrderNotFoundException(id));
+
+        if (order.getStatus() == Status.COMPLETED || order.getStatus() == Status.CANCELLED) {
+            return ResponseEntity //
+                    .status(HttpStatus.CONFLICT) //
+                    .header(HttpHeaders.CONTENT_TYPE, MediaTypes.HTTP_PROBLEM_DETAILS_JSON_VALUE) //
+                    .body(Problem.create() //
+                            .withTitle("Change not allowed") //
+                            .withDetail("You can't Change an order Priority that is in the " + order.getStatus() + " status"));
+        } else {
+            order.setPriority(priority);
+            return ResponseEntity.ok(assembler.toModel(orderRepository.save(order)));
+        }
+
+
     }
 }

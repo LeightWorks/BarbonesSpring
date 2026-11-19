@@ -16,12 +16,14 @@ class Order {
 
     private String description;
     private Status status;
+    private Priority priority;
 
     Order() {}
 
-    Order(String description, Status status) {
+    Order(String description, Status status,Priority priority) {
 
         this.description = description;
+        this.priority = priority;
         this.status = status;
     }
     public Long getId() {
@@ -35,6 +37,9 @@ class Order {
     public Status getStatus() {
         return this.status;
     }
+    public Priority getPriority() {
+        return this.priority;
+    }
 
     public void setId(Long id) {
         this.id = id;
@@ -46,6 +51,9 @@ class Order {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+    public void setPriority(Priority priority) {
+        this.priority = priority;
     }
 
     @Override
@@ -67,7 +75,7 @@ class Order {
 
     @Override
     public String toString() {
-        return "Order{" + "id=" + this.id + ", description='" + this.description + '\'' + ", status=" + this.status + '}';
+        return "Order{" + "id=" + this.id + ", description='" + this.description + '\'' + ", priority='" + this.priority + '\'' + ", status=" + this.status + '}';
     }
 
 }
